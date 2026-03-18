@@ -1,0 +1,662 @@
+<script>
+  var pwd = prompt("Password:");
+  if(pwd !== "KAIROS2026") {
+    document.body.innerHTML = "<h2 style='color:red;text-align:center;margin-top:40vh'>Accesso negato.</h2>";
+  }
+</script>
+
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>RUNDOWN MAKER</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080808;--bg2:#0c0c0c;--bg3:#111111;--bg4:#151515;
+  --border:#181818;
+  --text:#e0e0e0;--text2:#8a8a8a;
+  --green:#32cd32;
+  --font:'Barlow Condensed',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+body{display:flex;height:100vh;background:var(--bg);font-family:var(--font);color:var(--text);overflow:hidden}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:#0a0a0a}
+::-webkit-scrollbar-thumb{background:#222;border-radius:3px}
+button{cursor:pointer;font-family:var(--font)}
+input,select,textarea{font-family:var(--font)}
+select option{background:#111;color:#ddd}
+input[type=number]::-webkit-inner-spin-button{opacity:.4}
+
+/* SIDEBAR */
+#sidebar{width:188px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+#logo{padding:18px 16px 14px;border-bottom:1px solid var(--border)}
+.logo-sub{font-size:9px;font-weight:700;letter-spacing:3px;color:#363636}
+.logo-main{font-size:22px;font-weight:800;letter-spacing:2px;line-height:1.1;color:#e8e8e8}
+.logo-main span{color:#444;font-size:14px;letter-spacing:4px}
+#palette{flex:1;overflow-y:auto;padding-bottom:8px}
+.group-lbl{font-size:8.5px;font-weight:800;letter-spacing:2.5px;color:#2e2e2e;padding:12px 16px 5px;text-transform:uppercase}
+.block-btn{display:flex;align-items:center;gap:9px;width:100%;background:transparent;border:none;padding:7px 16px;text-align:left;color:#8a8a8a;font-size:14px;font-weight:700;letter-spacing:.5px;transition:background .1s,color .1s}
+.block-btn:hover{background:#151515;color:#c0c0c0}
+.dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+#sidebar-foot{padding:10px 16px;border-top:1px solid var(--border);font-size:9px;color:#2e2e2e;letter-spacing:1.5px}
+
+/* MAIN */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+#header{height:50px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 18px;gap:14px;flex-shrink:0}
+#scaletta-name{background:transparent;border:none;outline:none;color:#e0e0e0;font-size:17px;font-weight:800;letter-spacing:2.5px;font-family:var(--font);width:260px;text-transform:uppercase}
+#scaletta-name::placeholder{color:#2e2e2e}
+#block-count{color:#333;font-size:11px;letter-spacing:1.5px;margin-left:auto;white-space:nowrap}
+#btn-clear{background:transparent;border:1px solid #1e1e1e;color:#3a3a3a;padding:5px 12px;border-radius:3px;font-weight:700;font-size:12px;letter-spacing:1px;transition:color .15s,border-color .15s;display:none}
+#btn-clear:hover{color:#cc4444;border-color:#cc4444}
+#btn-export{background:var(--green);border:none;color:#000;padding:7px 16px;border-radius:4px;font-weight:800;font-size:13px;letter-spacing:1.5px;display:none;white-space:nowrap}
+#btn-export:hover{background:#28b828}
+
+/* COL HEADERS */
+#col-hdr{display:none;grid-template-columns:28px 38px 3px 98px 1fr 120px;align-items:center;padding:0 16px;height:24px;background:var(--bg);border-bottom:1px solid #111;flex-shrink:0}
+.col-h{font-size:8.5px;color:#2a2a2a;letter-spacing:1.5px;font-weight:800}
+
+/* LIST */
+#list{flex:1;overflow-y:auto;padding:6px 16px}
+#empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:10px;color:#252525}
+.empty-icon{font-size:52px;line-height:1}
+.empty-title{font-size:15px;font-weight:800;letter-spacing:3px}
+.empty-hint{font-size:11px;letter-spacing:1.5px;color:#1e1e1e}
+
+/* BLOCK ROW */
+.block-row{display:grid;grid-template-columns:28px 38px 3px 98px 1fr 120px;align-items:center;height:38px;margin-bottom:2px;border-radius:4px;background:#111;border:1px solid transparent;transition:background .1s,border .1s,opacity .15s;user-select:none}
+.block-row.drag-over{background:#1a1a1a}
+.block-row.dragging{opacity:.3}
+.drag-handle{display:flex;align-items:center;justify-content:center;color:#252525;font-size:16px;cursor:grab;height:100%;border-radius:4px 0 0 4px;transition:color .1s}
+.drag-handle:hover{color:#484848}
+.row-num{font-size:11px;color:#363636;font-family:var(--mono);text-align:right;padding-right:8px}
+.stripe{height:70%;border-radius:1px}
+.type-cell{padding:0 8px;display:flex;align-items:center}
+.type-badge{padding:2px 7px;border-radius:3px;font-size:11.5px;font-weight:800;letter-spacing:1.5px;white-space:nowrap}
+.label-cell{font-size:13.5px;font-weight:600;color:#c0c0c0;letter-spacing:.3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:4px}
+.actions{display:flex;gap:1px;justify-content:flex-end;padding-right:4px}
+.act-btn{background:transparent;border:none;padding:4px 7px;border-radius:3px;font-size:13px;line-height:1;transition:color .1s,background .1s}
+.act-btn:hover{background:rgba(255,255,255,.06)}
+
+/* OVERLAY */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;z-index:300}
+.overlay.open{display:flex}
+
+/* MODAL BASE */
+.modal{background:#0e0e0e;border:1px solid #1e1e1e;border-top-width:2px;border-radius:8px;padding:24px;box-shadow:0 24px 64px rgba(0,0,0,.9);font-family:var(--font)}
+.modal-head{display:flex;align-items:center;gap:10px;margin-bottom:22px}
+.modal-sub{color:#444;font-size:12px;letter-spacing:1.5px}
+.close-btn{background:none;border:none;color:#444;font-size:18px;line-height:1;padding:2px 6px;margin-left:auto}
+.close-btn:hover{color:#999}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.field{margin-bottom:14px}
+.field-lbl{display:block;font-size:9px;font-weight:700;letter-spacing:1.8px;color:#484848;margin-bottom:5px;text-transform:uppercase}
+.field input,.field select{background:#151515;border:1px solid #252525;color:#e0e0e0;padding:7px 10px;border-radius:4px;width:100%;font-size:14px;outline:none;transition:border-color .15s}
+.field input{font-family:var(--mono)}
+.field input:focus,.field select:focus{border-color:#333}
+.lua-lbl{display:block;font-size:9px;font-weight:700;letter-spacing:1.8px;color:#484848;margin-bottom:5px;text-transform:uppercase}
+.lua-preview{background:#050505;border:1px solid #1a1a1a;border-radius:4px;padding:10px 12px;font-family:var(--mono);font-size:11px;color:#3a8a60;white-space:pre;overflow-x:auto;max-height:140px;overflow-y:auto;line-height:1.65}
+.btn-cancel{background:transparent;border:1px solid #222;color:#666;padding:8px 18px;border-radius:4px;font-weight:700;font-size:14px;letter-spacing:1px;transition:border-color .1s,color .1s}
+.btn-cancel:hover{border-color:#444;color:#aaa}
+.btn-save{border:none;color:#000;padding:8px 22px;border-radius:4px;font-weight:800;font-size:14px;letter-spacing:1px}
+
+/* CFG MODAL */
+#cfg-modal .modal{width:430px;max-height:88vh;overflow-y:auto}
+.type-chip{padding:3px 10px;border-radius:3px;font-size:15px;font-weight:800;letter-spacing:2px;color:#000}
+
+/* EXPORT MODAL */
+#exp-modal .modal{width:660px;max-height:88vh;display:flex;flex-direction:column;border-top-color:var(--green)}
+.exp-title{font-size:17px;font-weight:800;letter-spacing:2px;color:var(--green)}
+.exp-info{color:#333;font-size:12px;letter-spacing:1px;margin-right:16px;margin-left:auto}
+#lua-out{flex:1;min-height:340px;background:#050505;border:1px solid #181818;border-radius:4px;padding:12px 14px;color:#3a8a60;font-family:var(--mono);font-size:11.5px;line-height:1.7;resize:vertical;outline:none;width:100%}
+.btn-copy{background:transparent;border:1px solid #248232;color:var(--green);padding:9px 18px;border-radius:4px;font-weight:700;font-size:14px;letter-spacing:1px;transition:background .18s,color .18s}
+.btn-copy.copied{background:#248232;color:#000}
+.btn-download{background:var(--green);border:none;color:#000;padding:9px 22px;border-radius:4px;font-weight:800;font-size:14px;letter-spacing:1px}
+.btn-download:hover{background:#28b828}
+.btn-email{background:transparent;border:1px solid #4682b4;color:#6aa3d5;padding:9px 18px;border-radius:4px;font-weight:700;font-size:14px;letter-spacing:1px;transition:background .18s,color .18s}
+.btn-email:hover{background:#4682b4;color:#000}
+
+/* EMAIL MODAL */
+#mail-modal .modal{width:420px;border-top-color:#4682b4}
+.mail-title{font-size:17px;font-weight:800;letter-spacing:2px;color:#6aa3d5}
+#mail-to{background:#151515;border:1px solid #252525;color:#e0e0e0;padding:9px 12px;border-radius:4px;width:100%;font-size:15px;outline:none;letter-spacing:.5px;transition:border-color .15s}
+#mail-to:focus{border-color:#4682b4}
+#mail-to.error{border-color:#cc4444}
+.btn-send{background:#4682b4;border:none;color:#fff;padding:9px 22px;border-radius:4px;font-weight:800;font-size:14px;letter-spacing:1px}
+.btn-send:hover{background:#5590c2}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div id="logo">
+    <div class="logo-sub">BROADCAST</div>
+    <div class="logo-main">RUNDOWN<br><span>MAKER</span></div>
+  </div>
+  <div id="palette"></div>
+  <div id="sidebar-foot">CLICK TO ADD BLOCK</div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <div id="header">
+    <input id="scaletta-name" type="text" placeholder="SCALETTA NAME" maxlength="40" spellcheck="false">
+    <div id="block-count">0 BLOCKS</div>
+    <button id="btn-clear" onclick="clearAll()">CLEAR</button>
+    <button id="btn-export" onclick="openExport()">&#8595;&nbsp; EXPORT KAIROS</button>
+  </div>
+  <div id="col-hdr">
+    <div class="col-h"></div>
+    <div class="col-h">#</div>
+    <div class="col-h"></div>
+    <div class="col-h" style="padding-left:8px">TYPE</div>
+    <div class="col-h">DESCRIPTION</div>
+    <div class="col-h"></div>
+  </div>
+  <div id="list">
+    <div id="empty">
+      <div class="empty-icon">&#9654;</div>
+      <div class="empty-title">EMPTY RUNDOWN</div>
+      <div class="empty-hint">CLICK BLOCKS IN THE SIDEBAR TO START</div>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIG MODAL -->
+<div id="cfg-modal" class="overlay" onclick="if(event.target===this)closeCfg()">
+  <div class="modal">
+    <div class="modal-head">
+      <span id="cfg-chip" class="type-chip"></span>
+      <span class="modal-sub">CONFIGURE</span>
+      <button class="close-btn" onclick="closeCfg()">&#10005;</button>
+    </div>
+    <div id="cfg-fields"></div>
+    <span class="lua-lbl">LUA PREVIEW</span>
+    <div id="cfg-lua" class="lua-preview"></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeCfg()">CANCEL</button>
+      <button id="btn-save" class="btn-save" onclick="saveCfg()">SAVE</button>
+    </div>
+  </div>
+</div>
+
+<!-- EXPORT MODAL -->
+<div id="exp-modal" class="overlay" onclick="if(event.target===this)closeExport()">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="exp-title">EXPORT &nbsp; KAIROS</div>
+      <div id="exp-info" class="exp-info"></div>
+      <button class="close-btn" onclick="closeExport()">&#10005;</button>
+    </div>
+    <textarea id="lua-out" readonly spellcheck="false"></textarea>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeExport()">CLOSE</button>
+      <button id="btn-copy" class="btn-copy" onclick="copyLua()">COPY</button>
+      <button class="btn-email" onclick="openEmail()">&#9993;&nbsp; SEND EMAIL</button>
+      <button class="btn-download" onclick="downloadTxt()">&#8595;&nbsp; DOWNLOAD .TXT</button>
+    </div>
+  </div>
+</div>
+
+<!-- EMAIL MODAL -->
+<div id="mail-modal" class="overlay" onclick="if(event.target===this)closeMail()">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="mail-title">&#9993;&nbsp; SEND VIA EMAIL</div>
+      <button class="close-btn" onclick="closeMail()">&#10005;</button>
+    </div>
+    <div class="field" style="margin-bottom:18px">
+      <span class="field-lbl">Recipient address</span>
+      <input type="email" id="mail-to" placeholder="nome@esempio.it" spellcheck="false">
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeMail()">CANCEL</button>
+      <button class="btn-send" onclick="sendEmail()">SEND &nbsp;&#9654;</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────
+var COLORS = {
+  CAM:'#1e90ff', SHOT:'#dc143c', CLASSX:'#ff1493',
+  HOLD:'#ff4500', DELAY:'#ff8c00',
+  SCENA:'#ff7f50', '2BOX':'#4169e1',
+  EXT:'#3cb371', STILL:'#4682b4', RAM:'#ffd700',
+  LED:'#248232', MIXLED:'#9400d3', CP:'#32cd32'
+};
+
+var GROUPS = [
+  {label:'CAMERA',    types:['CAM','SHOT','CLASSX']},
+  {label:'TIMING',    types:['HOLD','DELAY']},
+  {label:'SCENE',     types:['SCENA','2BOX']},
+  {label:'SOURCES',   types:['EXT','STILL','RAM']},
+  {label:'AUX / LED', types:['LED','MIXLED']},
+  {label:'CLIP',      types:['CP']}
+];
+
+var blocks = [];
+var uid = 1;
+var cfgIdx = null;
+var tmpCfg = null;
+var dragSrc = null;
+
+// ── INIT CONFIG ───────────────────────────────────────────────────────────
+function initCfg(type) {
+  var map = {
+    CAM:    {cam:1, seconds:0},
+    SHOT:   {letter:'A', number:1},
+    HOLD:   {},
+    DELAY:  {seconds:5},
+    STILL:  {n:1},
+    RAM:    {n:1, action:'PLAY'},
+    LED:    {led:1, srcType:'CAM', srcN:1},
+    MIXLED: {led:1, srcType:'STILL', srcN:1},
+    CP:     {cp:1, action:'play'},
+    CLASSX: {cam:1, seconds:0},
+    EXT:    {n:1, seconds:0},
+    SCENA:  {n:1},
+    '2BOX': {}
+  };
+  return JSON.parse(JSON.stringify(map[type] || {}));
+}
+
+// ── BLOCK LABEL ───────────────────────────────────────────────────────────
+function blockLabel(type, c) {
+  switch(type) {
+    case 'CAM':    return 'CAM ' + c.cam + (c.seconds>0 ? '  \u00b7  ' + c.seconds + 's' : '');
+    case 'SHOT':   return 'SHOT ' + c.letter + c.number;
+    case 'HOLD':   return 'HOLD  \u00b7  wait_user()';
+    case 'DELAY':  return 'DELAY  ' + c.seconds + 's';
+    case 'STILL':  return 'STILL ' + c.n;
+    case 'RAM':    return 'RAM ' + c.n + '  \u00b7  ' + c.action;
+    case 'LED':    return 'LED ' + c.led + '  \u2190  ' + c.srcType + ' ' + c.srcN;
+    case 'MIXLED': return 'MIX LED' + c.led + '  \u2190  ' + c.srcType + ' ' + c.srcN;
+    case 'CP':     return 'CP' + c.cp + '  \u00b7  ' + c.action.toUpperCase();
+    case 'CLASSX': return 'CLASSX ' + c.cam + (c.seconds>0 ? '  \u00b7  ' + c.seconds + 's' : '');
+    case 'EXT':    return 'EXT ' + c.n + (c.seconds>0 ? '  \u00b7  ' + c.seconds + 's' : '');
+    case 'SCENA':  return 'SCENA ' + c.n;
+    case '2BOX':   return '2BOX  \u00b7  ON AIR';
+    default:       return type;
+  }
+}
+
+// ── LUA GENERATOR ─────────────────────────────────────────────────────────
+function resolveSrc(t, n) {
+  if(t==='CAM')   return 'IP' + n;
+  if(t==='STILL') return 'FXINPUTS.STILL.STILL' + n;
+  if(t==='EXT')   return 'IP' + (30 + parseInt(n));
+  if(t==='RAM')   return 'RR' + n;
+  return '';
+}
+
+function generateLua(type, c) {
+  var tk = function(s){ return Math.ceil(s * 50); };
+  switch(type) {
+    case 'CAM': {
+      var s = "--CAM " + c.cam + "\nset('SCENES.PP.Layers.Background', 'sourceA', 'IP" + c.cam + "')\nset('MV1.Windows.Label-1', 'label_text', 'CAM " + c.cam + "')\nset('MV1.Windows.Countdown-1', 'ticks', '" + (c.seconds>0 ? tk(c.seconds) : 0) + "')\n";
+      if(c.seconds>0) s += "--INTERVALLO IN SECONDI " + c.seconds + "\ncall('MV1.Windows.Countdown-1', 'start')\nwait_seconds(" + c.seconds + ")\n";
+      return s;
+    }
+    case 'SHOT': {
+      var code = c.letter + c.number;
+      return "--SHOT " + code + "\ncall('TRIGGERS.SHOT" + code + "', 'send')\nset('MV1.Windows.Label-1', 'label_text', 'SHOT" + code + "')\n";
+    }
+    case 'HOLD':
+      return "--HOLD\nset('MV1.Windows.Label-1', 'label_text', 'SKIP')\nwait_user()\n";
+    case 'DELAY':
+      return "--DELAY " + c.seconds + " SECONDI\nset('MV1.Windows.Label-1', 'label_text', 'NEXT IN:')\nset('MV1.Windows.Countdown-1', 'ticks', '" + tk(c.seconds) + "')\ncall('MV1.Windows.Countdown-1', 'start')\nwait_seconds(" + c.seconds + ")\n";
+    case 'STILL':
+      return "--STILL " + c.n + "\nset('SCENES.PP.Layers.Background', 'sourceA', 'FXINPUTS.STILL.STILL" + c.n + "')\nset('MV1.Windows.Label-1', 'label_text', 'STILL " + c.n + "')\nset('MV1.Windows.Countdown-1', 'ticks', '0')\n";
+    case 'RAM':
+      return c.action==='PLAY'
+        ? "--RAM " + c.n + " PLAY\ncall('RR" + c.n + "', 'begin')\ncall('RR" + c.n + "', 'play')\n"
+        : "--RAM " + c.n + " STOP\ncall('RR" + c.n + "', 'stop')\n";
+    case 'LED': {
+      var src = resolveSrc(c.srcType, c.srcN);
+      var s = "--LED " + c.led + " " + c.srcType + " " + c.srcN + "\nset('SCENES.AUX" + c.led + ".Layers.Background', 'sourceA', '" + src + "')\n";
+      if(c.srcType==='RAM') s += "call('" + src + "', 'begin')\n";
+      return s;
+    }
+    case 'MIXLED': {
+      var src = resolveSrc(c.srcType, c.srcN);
+      var s = "--MIXLED" + c.led + " " + c.srcType + " " + c.srcN + "\n";
+      if(c.srcType==='RAM') s += "call('" + src + "', 'begin')\ncall('" + src + "', 'play')\n";
+      s += "set('SCENES.AUX" + c.led + ".Layers.Background', 'sourceB', '" + src + "')\ncall('SCENES.AUX" + c.led + "', 'auto')\n";
+      return s;
+    }
+    case 'CP': {
+      var cp = c.cp, action = c.action;
+      if(action==='play') return "--PLAY CP" + cp + "\nset('AUDIOMIXER.Channel 1', 'mute', '" + (cp==1?'0':'1') + "')\nset('AUDIOMIXER.Channel 2', 'mute', '" + (cp==2?'0':'1') + "')\nset('AUDIOMIXER.Channel 3', 'mute', '1')\ncall('CP" + cp + "', 'begin')\ncall('CP" + cp + "', 'play')\nset('SCENES.PP.Layers.Background', 'sourceA', 'CP" + cp + "')\n";
+      if(action==='stop') return "--STOP CP" + cp + "\ncall('CP" + cp + "', 'stop')\n";
+      return "--HOLD CP" + cp + "\nset('SCENES.PP.Layers.Background', 'sourceA', 'CP" + cp + "')\ncall('CP" + cp + "', 'begin')\n";
+    }
+    case 'CLASSX': {
+      var s = "--CLASSX" + c.cam + "\ncall('TRIGGERS.CAM" + c.cam + "', 'send')\nwait_seconds(2)\nset('SCENES.PP.Layers.Background', 'sourceA', 'IP33')\nset('MV1.Windows.Label-1', 'label_text', 'KCAM" + c.cam + "')\nset('MV1.Windows.Countdown-1', 'ticks', '0')\n";
+      if(c.seconds>0) s += "--INTERVALLO IN SECONDI " + c.seconds + "\nset('MV1.Windows.Countdown-1', 'ticks', '" + tk(c.seconds) + "')\ncall('MV1.Windows.Countdown-1', 'start')\nwait_seconds(" + c.seconds + ")\n";
+      return s;
+    }
+    case 'EXT': {
+      var ipMap = {1:'1000183520', 2:'1000183530'};
+      var s = "--EXT " + c.n + "\nset('SCENES.PP.Layers.Background', 'sourceA', '" + (ipMap[c.n]||'1000183520') + "')\nset('MV1.Windows.Label-1', 'label_text', 'EXT " + c.n + "')\nset('MV1.Windows.Countdown-1', 'ticks', '" + tk(c.seconds) + "')\n";
+      if(c.seconds>0) s += "call('MV1.Windows.Countdown-1', 'start')\nwait_seconds(" + c.seconds + ")\n";
+      return s;
+    }
+    case 'SCENA':
+      return "--SCENA " + c.n + "\nset('MV1.Windows.Countdown-1', 'ticks', '0')\nset('MV1.Windows.Label-1', 'label_text', 'SCENA " + c.n + "')\n";
+    case '2BOX':
+      return "--2BOX\nset('SCENES.PP.Layers.Background', 'sourceA', '1000171782')\nset('MV1.Windows.Label-1', 'label_text', '2BOX')\n";
+    default: return '';
+  }
+}
+
+function fullLua() {
+  return blocks.map(function(b){ return generateLua(b.type, b.config); }).join('\n');
+}
+
+// ── BUILD SIDEBAR ─────────────────────────────────────────────────────────
+function buildSidebar() {
+  var pal = document.getElementById('palette');
+  pal.innerHTML = '';
+  GROUPS.forEach(function(g) {
+    var gl = document.createElement('div');
+    gl.className = 'group-lbl';
+    gl.textContent = g.label;
+    pal.appendChild(gl);
+    g.types.forEach(function(type) {
+      var col = COLORS[type] || '#555';
+      var btn = document.createElement('button');
+      btn.className = 'block-btn';
+      btn.innerHTML = '<span class="dot" style="background:' + col + ';box-shadow:0 0 6px ' + col + '66"></span>' + type;
+      btn.onclick = function(){ addBlock(type); };
+      pal.appendChild(btn);
+    });
+  });
+}
+
+// ── BLOCK OPERATIONS ──────────────────────────────────────────────────────
+function addBlock(type) {
+  blocks.push({ id: uid++, type: type, config: initCfg(type) });
+  renderList();
+}
+function deleteBlock(i) {
+  blocks.splice(i, 1);
+  renderList();
+}
+function dupBlock(i) {
+  var clone = { id: uid++, type: blocks[i].type, config: JSON.parse(JSON.stringify(blocks[i].config)) };
+  blocks.splice(i+1, 0, clone);
+  renderList();
+}
+function moveUp(i) {
+  if(i===0) return;
+  var tmp = blocks[i-1]; blocks[i-1] = blocks[i]; blocks[i] = tmp;
+  renderList();
+}
+function moveDown(i) {
+  if(i >= blocks.length-1) return;
+  var tmp = blocks[i]; blocks[i] = blocks[i+1]; blocks[i+1] = tmp;
+  renderList();
+}
+function clearAll() {
+  if(!blocks.length) return;
+  if(confirm('Clear all blocks?')) { blocks = []; renderList(); }
+}
+
+// ── RENDER LIST ───────────────────────────────────────────────────────────
+function renderList() {
+  var list = document.getElementById('list');
+  var empty = document.getElementById('empty');
+  var cnt = document.getElementById('block-count');
+  var hdr = document.getElementById('col-hdr');
+  var clr = document.getElementById('btn-clear');
+  var exp = document.getElementById('btn-export');
+  var n = blocks.length;
+
+  cnt.textContent = n + (n===1 ? ' BLOCK' : ' BLOCKS');
+  clr.style.display = n > 0 ? 'inline-block' : 'none';
+  exp.style.display = n > 0 ? 'inline-block' : 'none';
+  hdr.style.display = n > 0 ? 'grid' : 'none';
+  empty.style.display = n > 0 ? 'none' : 'flex';
+
+  list.querySelectorAll('.block-row').forEach(function(r){ r.remove(); });
+
+  blocks.forEach(function(block, i) {
+    var col = COLORS[block.type] || '#555';
+    var row = document.createElement('div');
+    row.className = 'block-row';
+    row.draggable = true;
+    row.dataset.idx = i;
+
+    var upDis  = i===0 ? 'color:#252525;pointer-events:none' : 'color:#383838';
+    var dnDis  = i===blocks.length-1 ? 'color:#252525;pointer-events:none' : 'color:#383838';
+
+    row.innerHTML =
+      '<div class="drag-handle" title="Drag to reorder">\u22BF</div>' +
+      '<div class="row-num">' + String(i+1).padStart(2,'0') + '</div>' +
+      '<div class="stripe" style="background:' + col + ';box-shadow:0 0 8px ' + col + '66"></div>' +
+      '<div class="type-cell"><span class="type-badge" style="background:' + col + '22;color:' + col + '">' + block.type + '</span></div>' +
+      '<div class="label-cell">' + blockLabel(block.type, block.config) + '</div>' +
+      '<div class="actions">' +
+        '<button class="act-btn" title="Move up" style="' + upDis + '" onclick="moveUp(' + i + ')">&#8593;</button>' +
+        '<button class="act-btn" title="Move down" style="' + dnDis + '" onclick="moveDown(' + i + ')">&#8595;</button>' +
+        '<button class="act-btn" title="Configure" style="color:#525252" onclick="openCfg(' + i + ')">&#9881;</button>' +
+        '<button class="act-btn" title="Duplicate" style="color:#424242" onclick="dupBlock(' + i + ')">&#9064;</button>' +
+        '<button class="act-btn" title="Delete" style="color:#5a2222" onmouseenter="this.style.color=\'#dd4444\'" onmouseleave="this.style.color=\'#5a2222\'" onclick="deleteBlock(' + i + ')">&#10005;</button>' +
+      '</div>';
+
+    // drag events
+    row.addEventListener('dragstart', function(e){
+      dragSrc = i;
+      row.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    row.addEventListener('dragend', function(){
+      dragSrc = null;
+      document.querySelectorAll('.block-row').forEach(function(r){ r.classList.remove('dragging','drag-over'); });
+    });
+    row.addEventListener('dragover', function(e){
+      e.preventDefault();
+      document.querySelectorAll('.block-row').forEach(function(r){ r.classList.remove('drag-over'); });
+      if(dragSrc !== null && dragSrc !== i) row.classList.add('drag-over');
+    });
+    row.addEventListener('drop', function(e){
+      e.preventDefault();
+      if(dragSrc===null || dragSrc===i) return;
+      var moved = blocks.splice(dragSrc, 1)[0];
+      blocks.splice(i, 0, moved);
+      renderList();
+    });
+
+    list.appendChild(row);
+  });
+}
+
+// ── CONFIG MODAL ──────────────────────────────────────────────────────────
+function openCfg(i) {
+  cfgIdx = i;
+  tmpCfg = JSON.parse(JSON.stringify(blocks[i].config));
+  var type = blocks[i].type;
+  var col = COLORS[type] || '#888';
+
+  document.querySelector('#cfg-modal .modal').style.borderTopColor = col;
+  var chip = document.getElementById('cfg-chip');
+  chip.textContent = type;
+  chip.style.background = col;
+  document.getElementById('btn-save').style.background = col;
+
+  buildCfgFields(type);
+  updateLuaPreview();
+  document.getElementById('cfg-modal').classList.add('open');
+}
+function closeCfg() {
+  document.getElementById('cfg-modal').classList.remove('open');
+  cfgIdx = null; tmpCfg = null;
+}
+function saveCfg() {
+  if(cfgIdx===null) return;
+  blocks[cfgIdx].config = JSON.parse(JSON.stringify(tmpCfg));
+  renderList();
+  closeCfg();
+}
+function cfgSet(key, val) {
+  var num = parseFloat(val);
+  tmpCfg[key] = (!isNaN(num) && val !== '') ? num : val;
+  updateLuaPreview();
+}
+function updateLuaPreview() {
+  if(cfgIdx===null) return;
+  document.getElementById('cfg-lua').textContent = generateLua(blocks[cfgIdx].type, tmpCfg);
+}
+
+// ── FIELD BUILDERS ────────────────────────────────────────────────────────
+function fld(label, inner) {
+  return '<div class="field"><span class="field-lbl">' + label + '</span>' + inner + '</div>';
+}
+function fSel(label, key, opts) {
+  var val = tmpCfg[key];
+  var options = opts.map(function(o){
+    var v = o[0], t = o[1];
+    return '<option value="' + v + '"' + (v == val ? ' selected' : '') + '>' + t + '</option>';
+  }).join('');
+  return fld(label, '<select onchange="cfgSet(\'' + key + '\',this.value)">' + options + '</select>');
+}
+function fNum(label, key, min, max) {
+  min = min||0; max = max||9999;
+  return fld(label, '<input type="number" value="' + tmpCfg[key] + '" min="' + min + '" max="' + max + '" oninput="cfgSet(\'' + key + '\',this.value)">');
+}
+function srcFields() {
+  var t = tmpCfg.srcType;
+  var maxN = t==='STILL'?20:t==='RAM'?8:t==='EXT'?2:3;
+  return fSel('LED', 'led', [[1,'LED 1'],[2,'LED 2']]) +
+    fSel('Source type', 'srcType', [['CAM','CAM'],['STILL','STILL'],['EXT','EXT'],['RAM','RAM']]) +
+    fld('Source number (1\u2013' + maxN + ')', '<input type="number" value="' + tmpCfg.srcN + '" min="1" max="' + maxN + '" oninput="cfgSet(\'srcN\',this.value)">');
+}
+
+function buildCfgFields(type) {
+  var html = '';
+  switch(type) {
+    case 'CAM':
+      html = fSel('Camera', 'cam', [[1,'CAM 1'],[2,'CAM 2'],[3,'CAM 3']]) +
+             fNum('Duration seconds (0 = no auto-next)', 'seconds');
+      break;
+    case 'SHOT':
+      html = fSel('Row', 'letter', [['A','Row A'],['B','Row B'],['C','Row C'],['D','Row D'],['E','Row E']]) +
+             fSel('Number', 'number', (function(){var a=[];for(var i=1;i<=19;i++)a.push([i,String(i)]);return a;})());
+      break;
+    case 'DELAY':
+      html = fNum('Seconds', 'seconds', 1); break;
+    case 'STILL':
+      html = fNum('Still number (1\u201325)', 'n', 1, 25); break;
+    case 'RAM':
+      html = fSel('RAM', 'n', (function(){var a=[];for(var i=1;i<=8;i++)a.push([i,'RAM '+i]);return a;})()) +
+             fSel('Action', 'action', [['PLAY','\u25B6 PLAY'],['STOP','\u25A0 STOP']]);
+      break;
+    case 'LED': case 'MIXLED':
+      html = srcFields(); break;
+    case 'CP':
+      html = fSel('Clip player', 'cp', [[1,'CP1'],[2,'CP2']]) +
+             fSel('Action', 'action', [['play','\u25B6 PLAY'],['stop','\u25A0 STOP'],['hold','\u23F8 HOLD']]);
+      break;
+    case 'CLASSX':
+      html = fSel('Camera', 'cam', [[1,'CLASSX 1 (CAM 1)'],[2,'CLASSX 2 (CAM 2)'],[3,'CLASSX 3 (CAM 3)']]) +
+             fNum('Duration seconds (0 = no auto-next)', 'seconds');
+      break;
+    case 'EXT':
+      html = fSel('EXT input', 'n', [[1,'EXT 1'],[2,'EXT 2']]) +
+             fNum('Duration seconds (0 = no auto-next)', 'seconds');
+      break;
+    case 'SCENA':
+      html = fNum('Scene number', 'n', 1); break;
+    default:
+      html = '<p style="color:#444;font-family:var(--mono);font-size:12px;padding:4px 0">No parameters needed.</p>';
+  }
+  document.getElementById('cfg-fields').innerHTML = html;
+}
+
+// ── EXPORT MODAL ──────────────────────────────────────────────────────────
+function openExport() {
+  var lua = fullLua();
+  document.getElementById('lua-out').value = lua;
+  var lines = lua.split('\n').length;
+  document.getElementById('exp-info').textContent = blocks.length + ' BLOCKS  \u00b7  ' + lines + ' LINES';
+  document.getElementById('exp-modal').classList.add('open');
+}
+function closeExport() {
+  document.getElementById('exp-modal').classList.remove('open');
+}
+function copyLua() {
+  var btn = document.getElementById('btn-copy');
+  var ta = document.getElementById('lua-out');
+  if(navigator.clipboard) {
+    navigator.clipboard.writeText(ta.value).then(function(){ flashCopy(); });
+  } else {
+    ta.select(); document.execCommand('copy'); flashCopy();
+  }
+}
+function flashCopy() {
+  var btn = document.getElementById('btn-copy');
+  btn.textContent = '\u2713  COPIED';
+  btn.classList.add('copied');
+  setTimeout(function(){ btn.textContent = 'COPY'; btn.classList.remove('copied'); }, 2200);
+}
+function downloadTxt() {
+  var name = (document.getElementById('scaletta-name').value || 'SCALETTA').trim().replace(/\s+/g,'_');
+  var lua = fullLua();
+  var blob = new Blob([lua], {type:'text/plain'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = name + '.txt';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+}
+
+// ── EMAIL MODAL ───────────────────────────────────────────────────────────
+function openEmail() {
+  document.getElementById('mail-to').value = '';
+  document.getElementById('mail-to').classList.remove('error');
+  document.getElementById('mail-modal').classList.add('open');
+  setTimeout(function(){ document.getElementById('mail-to').focus(); }, 80);
+}
+function closeMail() {
+  document.getElementById('mail-modal').classList.remove('open');
+}
+function sendEmail() {
+  var to = document.getElementById('mail-to').value.trim();
+  var field = document.getElementById('mail-to');
+  if(!to || !to.includes('@')) {
+    field.classList.add('error');
+    setTimeout(function(){ field.classList.remove('error'); }, 1500);
+    return;
+  }
+  var sName = (document.getElementById('scaletta-name').value || 'SCALETTA').trim();
+  var subject = encodeURIComponent('RUNDOWN: ' + sName);
+  var body = encodeURIComponent(fullLua());
+  var link = 'https://mail.google.com/mail/?view=cm&fs=1&to=' + encodeURIComponent(to) + '&su=' + subject + '&body=' + body;
+  window.open(link, '_blank');
+  closeMail();
+}
+
+// ── KEYBOARD SHORTCUTS ────────────────────────────────────────────────────
+document.addEventListener('keydown', function(e) {
+  if(e.key === 'Escape') {
+    if(document.getElementById('mail-modal').classList.contains('open')) closeMail();
+    else if(document.getElementById('cfg-modal').classList.contains('open')) closeCfg();
+    else if(document.getElementById('exp-modal').classList.contains('open')) closeExport();
+  }
+  if((e.ctrlKey||e.metaKey) && e.key==='e') {
+    e.preventDefault();
+    if(blocks.length > 0) openExport();
+  }
+});
+
+// ── BOOT ──────────────────────────────────────────────────────────────────
+buildSidebar();
+renderList();
+</script>
+</body>
+</html>
